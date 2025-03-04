@@ -1,0 +1,16 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache git postgresql-client
+
+RUN npm install -g @medusajs/medusa-cli@latest
+
+WORKDIR /app
+RUN git clone https://github.com/medusajs/medusa-starter-default.git .
+RUN npm install --legacy-peer-deps --include=dev
+
+RUN echo "Fresh build $(date +%s)" > build-timestamp.txt
+RUN npm run build
+RUN mkdir -p public/admin && mv .medusa/server/public/admin/* public/admin/
+
+EXPOSE 9000
+CMD ["sh", "-c", "./node_modules/.bin/medusa db:migrate && npm run seed && ./node_modules/.bin/medusa user --email admin@medusa-test.com --password supersecret && npm run start"]
